@@ -29,7 +29,7 @@ public final class OkHttp3SoapClient implements SoapClient {
     public Result<SoapFault, MTOM> executeMTOM(SoapRequest req) {
         return request(req, (contentType, rb) -> {
             if ("multipart".equals(rb.contentType().type())) {
-                return MTOM.fromInputStream(contentType, rb.byteStream());
+                return MTOM.fromInputStream(MIMEType.valueOf(contentType), rb.byteStream());
             } else {
                 return soapDoc(req, rb).map(doc -> new MTOM(doc, Collections.emptyList()));
             }

@@ -33,7 +33,7 @@ import java.io.UnsupportedEncodingException;
  * https://github.com/apache/commons-fileupload
  *
  */
-final class MultipartStream {
+final class MultipartInput {
 
     // ----------------------------------------------------- Manifest constants
 
@@ -141,7 +141,7 @@ final class MultipartStream {
     // ----------------------------------------------------------- Constructors
 
     /**
-     * <p> Constructs a <code>MultipartStream</code> with a custom size buffer.
+     * <p> Constructs a <code>MultipartInput</code> with a custom size buffer.
      *
      * <p> Note that the buffer must be at least big enough to contain the
      * boundary string, plus 4 characters for CR/LF and double dash, plus at
@@ -157,9 +157,9 @@ final class MultipartStream {
      *
      * @since 1.3.1
      */
-    public MultipartStream(InputStream input,
-                           byte[] boundary,
-                           int bufSize) {
+    public MultipartInput(InputStream input,
+                          byte[] boundary,
+                          int bufSize) {
 
         if (boundary == null) {
             throw new IllegalArgumentException("boundary may not be null");
@@ -169,7 +169,7 @@ final class MultipartStream {
         this.boundaryLength = boundary.length + BOUNDARY_PREFIX.length;
         if (bufSize < this.boundaryLength + 1) {
             throw new IllegalArgumentException(
-                    "The buffer size specified for the MultipartStream is too small");
+                    "The buffer size specified for the MultipartInput is too small");
         }
 
         this.input = input;
@@ -241,7 +241,7 @@ final class MultipartStream {
      * @return <code>true</code> if there are more encapsulations in
      *         this stream; <code>false</code> otherwise.
      *
-     * @throws MultipartStream.MalformedStreamException if the stream ends unexpectedly or
+     * @throws MultipartInput.MalformedStreamException if the stream ends unexpectedly or
      *                                  fails to follow required syntax.
      */
     public boolean readBoundary() throws IOException {
@@ -267,11 +267,11 @@ final class MultipartStream {
             } else if (arrayequals(marker, FIELD_SEPARATOR, 2)) {
                 nextChunk = true;
             } else {
-                throw new MultipartStream.MalformedStreamException(
+                throw new MultipartInput.MalformedStreamException(
                         "Unexpected characters follow a boundary");
             }
         } catch (IOException e) {
-            throw new MultipartStream.MalformedStreamException("Stream ended unexpectedly");
+            throw new MultipartInput.MalformedStreamException("Stream ended unexpectedly");
         }
         return nextChunk;
     }
@@ -296,9 +296,9 @@ final class MultipartStream {
      *                                  being currently parsed.
      */
     public void setBoundary(byte[] boundary)
-            throws MultipartStream.IllegalBoundaryException {
+            throws MultipartInput.IllegalBoundaryException {
         if (boundary.length != boundaryLength - BOUNDARY_PREFIX.length) {
-            throw new MultipartStream.IllegalBoundaryException(
+            throw new MultipartInput.IllegalBoundaryException(
                     "The length of a boundary token can not be changed");
         }
         System.arraycopy(boundary, 0, this.boundary, BOUNDARY_PREFIX.length,
@@ -333,10 +333,10 @@ final class MultipartStream {
             try {
                 b = readByte();
             } catch (IOException e) {
-                throw new MultipartStream.MalformedStreamException("Stream ended unexpectedly");
+                throw new MultipartInput.MalformedStreamException("Stream ended unexpectedly");
             }
             if (++size > HEADER_PART_SIZE_MAX) {
-                throw new MultipartStream.MalformedStreamException(
+                throw new MultipartInput.MalformedStreamException(
                         format("Header section has more than %s bytes (maybe it is not properly terminated)",
                                 HEADER_PART_SIZE_MAX));
             }
@@ -377,7 +377,7 @@ final class MultipartStream {
      *
      * <p>Arbitrary large amounts of data can be processed by this
      * method using a constant size buffer. (see {@link
-     * #MultipartStream(InputStream,byte[],int) constructor}).
+     * #MultipartInput(InputStream,byte[],int) constructor}).
      *
      * @param output The <code>Stream</code> to write data into. May
      *               be null, in which case this method is equivalent
@@ -393,17 +393,19 @@ final class MultipartStream {
         byte[] buffer = new byte[DEFAULT_BUFSIZE];
         int len;
         while ((len = istream.read(buffer)) != -1) {
-            output.write(buffer, 0, len);
+            if (output != null) {
+                output.write(buffer, 0, len);
+            }
         }
         return len;
     }
 
     /**
-     * Creates a new {@link MultipartStream.ItemInputStream}.
-     * @return A new instance of {@link MultipartStream.ItemInputStream}.
+     * Creates a new {@link MultipartInput.ItemInputStream}.
+     * @return A new instance of {@link MultipartInput.ItemInputStream}.
      */
-    MultipartStream.ItemInputStream newInputStream() {
-        return new MultipartStream.ItemInputStream();
+    MultipartInput.ItemInputStream newInputStream() {
+        return new MultipartInput.ItemInputStream();
     }
 
     /**
@@ -440,7 +442,7 @@ final class MultipartStream {
             // Read boundary - if succeeded, the stream contains an
             // encapsulation.
             return readBoundary();
-        } catch (MultipartStream.MalformedStreamException e) {
+        } catch (MultipartInput.MalformedStreamException e) {
             return false;
         } finally {
             // Restore delimiter.
@@ -616,7 +618,7 @@ final class MultipartStream {
          * Called for finding the separator.
          */
         private void findSeparator() {
-            pos = MultipartStream.this.findSeparator();
+            pos = MultipartInput.this.findSeparator();
             if (pos == -1) {
                 if (tail - head > keepRegion) {
                     pad = keepRegion;
@@ -801,7 +803,7 @@ final class MultipartStream {
                     // Boundary can't be in there so signal an error
                     // condition.
                     final String msg = "Stream ended unexpectedly";
-                    throw new MultipartStream.MalformedStreamException(msg);
+                    throw new MultipartInput.MalformedStreamException(msg);
                 }
                 tail += bytesRead;
 

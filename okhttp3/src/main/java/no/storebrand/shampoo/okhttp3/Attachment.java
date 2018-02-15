@@ -1,16 +1,15 @@
 package no.storebrand.shampoo.okhttp3;
 
-import okhttp3.MediaType;
 import okio.ByteString;
 
 import java.util.Objects;
 
 public final class Attachment {
     public final ContentId id;
-    public final MediaType contentType;
+    public final MIMEType contentType;
     public final ByteString data;
 
-    public Attachment(ContentId id, MediaType contentType, ByteString data) {
+    public Attachment(ContentId id, MIMEType contentType, ByteString data) {
         this.id = id;
         this.contentType = contentType;
         this.data = data;
@@ -29,5 +28,14 @@ public final class Attachment {
     @Override
     public int hashCode() {
         return Objects.hash(id, contentType, data);
+    }
+
+    @Override
+    public String toString() {
+        return "Attachment{" +
+                "id=" + id +
+                ", contentType=" + contentType +
+                ", data=" + data +
+                '}';
     }
 }
